@@ -1,0 +1,29 @@
+name: Build toolchain
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Build toolchain
+      run: |
+        sudo apt update
+        sudo apt install unzip libtool-bin curl cmake gperf gawk flex bison nano xxd \
+        fakeroot kmod cpio git python3-docutils gettext automake autopoint \
+        texinfo build-essential help2man pkg-config zlib1g-dev libgmp3-dev \
+        libmpc-dev libmpfr-dev libncurses5-dev libltdl-dev wget libc-dev-bin
+        git clone --depth=1 https://github.com/hanwckf/rt-n56u.git /opt/rt-n56u
+        cd /opt/rt-n56u/toolchain-mipsel
+        ./clean_toolchain
+        ./build_toolchain
+        cd toolchain-3.4.x
+        tar -Jcvpf mipsel-linux-uclibc.tar.xz bin include lib libexec mipsel-linux-uclibc share
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: /opt/rt-n56u/toolchain-mipsel/toolchain-3.4.x/mipsel-linux-uclibc.tar.xz
